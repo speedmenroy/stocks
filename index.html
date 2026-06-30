@@ -3,59 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>期權股息收息計算器</title>
+    <title>港美股息 & 期權收息選股器</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; background-color: #f4f7f6; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { color: #333; margin-top: 0; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .result { font-size: 1.2em; color: #2c3e50; margin-top: 15px; font-weight: bold; }
-        .highlight { color: #27ae60; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 20px auto; padding: 15px; background-color: #f5f7fa; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h2 { color: #2c3e50; margin-top: 0; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; font-size: 1.4em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #edf2f7; }
+        th { background-color: #f7fafc; color: #4a5568; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.9em; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e0; border-radius: 6px; }
+        .result-box { background: #ebf8ff; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #3182ce; }
+        .highlight { color: #2f855a; font-weight: bold; font-size: 1.2em; }
+        .btn-link { color: #3182ce; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>🧮 期權年化回報計算器</h2>
+        <h2>📋 核心高息股資產清單</h2>
+        <p style="font-size: 0.85em; color: #718096; margin-top: -5px;">*點擊「帶入期權」可直接將現價填入下方計算器</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>代號</th>
+                    <th>名稱</th>
+                    <th>現價</th>
+                    <th>股息率</th>
+                    <th>派息週期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="stockTable">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🧮 期權年化回報計算器 (Short Put / Covered Call)</h2>
+        <div class="input-group">
+            <label>現價參考 ($):</label>
+            <input type="number" id="currentPrice" value="50" readonly style="background: #edf2f7;">
+        </div>
         <div class="input-group">
             <label>行使價 (Strike Price $):</label>
-            <input type="number" id="strike" value="50" oninput="calculateOption()">
+            <input type="number" id="strike" value="48" oninput="calculateOption()">
         </div>
         <div class="input-group">
             <label>期權金 (Premium $):</label>
-            <input type="number" id="premium" value="1.2" step="0.1" oninput="calculateOption()">
+            <input type="number" id="premium" value="1.0" step="0.05" oninput="calculateOption()">
         </div>
         <div class="input-group">
             <label>距離到期天數 (Days):</label>
             <input type="number" id="days" value="30" oninput="calculateOption()">
         </div>
         
-        <div class="result">
-            單次收益率: <span id="yieldResult" class="highlight">2.40</span>%<br>
-            預估年化回報率: <span id="annualResult" class="highlight">29.20</span>%
+        <div class="result-box">
+            單次期權收益率: <span id="yieldResult" class="highlight">0.00</span>%<br style="margin-bottom: 5px;">
+            預估年化回報率: <span id="annualResult" class="highlight">0.00</span>%
         </div>
     </div>
 
-    <div style="font-size: 0.85em; color: #7f8c8d; text-align: center;">
-        提示：將此檔案儲存在手機或電腦，點開即可隨時計算 Short Put / Covered Call 回報。
-    </div>
-
     <script>
+        // 內置精選港美股收息資產數據
+        const stockData = [
+            { ticker: "0005.HK", name: "匯豐控股", price: 71.5, yield: "5.8%", cycle: "季派 (3, 6, 9, 11月)" },
+            { ticker: "0941.HK", name: "中國移動", price: 73.2, yield: "6.2%", cycle: "半年派 (6, 10月)" },
+            { ticker: "O", name: "Realty Income", price: 54.2, yield: "5.9%", cycle: "月派 (每月)" },
+            { ticker: "KO", name: "可口可樂", price: 62.1, yield: "3.1%", cycle: "季派 (4, 7, 10, 12月)" },
+            { ticker: "MO", name: "奧馳亞", price: 45.8, yield: "8.4%", cycle: "季派 (1, 4, 7, 10月)" }
+        ];
+
+        // 渲染股票表格
+        const tbody = document.getElementById('stockTable');
+        stockData.forEach(stock => {
+            const row = `<tr>
+                <td><strong>${stock.ticker}</strong></td>
+                <td>${stock.name}</td>
+                <td>$${stock.price}</td>
+                <td style="color: #2f855a; font-weight: bold;">${stock.yield}</td>
+                <td><small>${stock.cycle}</small></td>
+                <td><button class="btn-link" onclick="selectStock(${stock.price})">帶入期權</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        // 選擇股票時自動填入現價及估算行使價
+        function selectStock(price) {
+            document.getElementById('currentPrice').value = price;
+            // 預設以約 4-5% Out-of-the-money 作為 Short Put 行使價參考
+            document.getElementById('strike').value = (price * 0.95).toFixed(1);
+            calculateOption();
+        }
+
+        // 期權核心計算
         function calculateOption() {
-            // 獲取輸入值
             const strike = parseFloat(document.getElementById('strike').value) || 0;
             const premium = parseFloat(document.getElementById('premium').value) || 0;
             const days = parseInt(document.getElementById('days').value) || 0;
 
             if (strike > 0 && days > 0) {
-                // 計算單次收益率
                 const premiumYield = (premium / strike) * 100;
-                // 計算年化回報率
                 const annualizedReturn = premiumYield * (365 / days);
 
-                // 顯示結果
                 document.getElementById('yieldResult').innerText = premiumYield.toFixed(2);
                 document.getElementById('annualResult').innerText = annualizedReturn.toFixed(2);
             } else {
@@ -63,7 +114,8 @@
                 document.getElementById('annualResult').innerText = "0.00";
             }
         }
-        // 初始化計算
+
+        // 預先執行一次計算
         calculateOption();
     </script>
 </body>
