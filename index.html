@@ -1,62 +1,70 @@
 <!DOCTYPE html>
-<html lang="zh-HK" data-theme="light">
+<html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HK / US Income Builder – Simple</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
-  <style>
-    :root, [data-theme="light"] {
-      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
-      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
-      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
-      --space-12: 3rem; --space-16: 4rem;
-      --color-bg: #f7f6f2;
-      --color-surface: #f9f8f5;
-      --color-surface-2: #fbfbf9;
-      --color-surface-offset: #f3f0ec;
-      --color-border: #d4d1ca;
-      --color-divider: #dcd9d5;
-      --color-text: #28251d;
-      --color-text-muted: #64625d;
-      --color-text-faint: #9d9b95;
-      --color-text-inverse: #f9f8f4;
-      --color-primary: #01696f;
-      --color-primary-hover: #0c4e54;
-      --color-primary-highlight: #d6e4e2;
-      --color-success: #437a22;
-      --color-warning: #964219;
-      --radius-sm: 0.375rem;
-      --radius-md: 0.5rem;
-      --radius-lg: 0.75rem;
-      --radius-xl: 1rem;
-      --radius-full: 9999px;
-      --shadow-sm: 0 1px 2px rgba(32,26,20,0.06);
-      --shadow-md: 0 6px 16px rgba(32,26,20,0.08);
-      --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
-      --font-body: 'General Sans', 'Inter', sans-serif;
-      --font-display: 'General Sans', 'Inter', sans-serif;
-      --content-wide: 1240px;
-    }
-    [data-theme="dark"] {
-      --color-bg: #171614;
-      --color-surface: #1c1b19;
-      --color-surface-2: #201f1d;
-      --color-surface-offset: #23211f;
-      --color-border: #393836;
-      --color-divider: #262523;
-      --color-text: #cdccca;
-      --color-text-muted: #a4a29f;
-      --color-text-faint: #7d7b78;
-      --color-text-inverse: #2b2a28;
-      --color-primary: #4f98a3;
-      --color-primary-hover: #6eaeb7;
-      --color-primary-highlight: #243437;
-      --color-success: #6daa45;
-      --color-warning: #e8af34;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-      
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>期權股息收息計算器</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; background-color: #f4f7f6; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: #333; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .result { font-size: 1.2em; color: #2c3e50; margin-top: 15px; font-weight: bold; }
+        .highlight { color: #27ae60; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🧮 期權年化回報計算器</h2>
+        <div class="input-group">
+            <label>行使價 (Strike Price $):</label>
+            <input type="number" id="strike" value="50" oninput="calculateOption()">
+        </div>
+        <div class="input-group">
+            <label>期權金 (Premium $):</label>
+            <input type="number" id="premium" value="1.2" step="0.1" oninput="calculateOption()">
+        </div>
+        <div class="input-group">
+            <label>距離到期天數 (Days):</label>
+            <input type="number" id="days" value="30" oninput="calculateOption()">
+        </div>
+        
+        <div class="result">
+            單次收益率: <span id="yieldResult" class="highlight">2.40</span>%<br>
+            預估年化回報率: <span id="annualResult" class="highlight">29.20</span>%
+        </div>
+    </div>
+
+    <div style="font-size: 0.85em; color: #7f8c8d; text-align: center;">
+        提示：將此檔案儲存在手機或電腦，點開即可隨時計算 Short Put / Covered Call 回報。
+    </div>
+
+    <script>
+        function calculateOption() {
+            // 獲取輸入值
+            const strike = parseFloat(document.getElementById('strike').value) || 0;
+            const premium = parseFloat(document.getElementById('premium').value) || 0;
+            const days = parseInt(document.getElementById('days').value) || 0;
+
+            if (strike > 0 && days > 0) {
+                // 計算單次收益率
+                const premiumYield = (premium / strike) * 100;
+                // 計算年化回報率
+                const annualizedReturn = premiumYield * (365 / days);
+
+                // 顯示結果
+                document.getElementById('yieldResult').innerText = premiumYield.toFixed(2);
+                document.getElementById('annualResult').innerText = annualizedReturn.toFixed(2);
+            } else {
+                document.getElementById('yieldResult').innerText = "0.00";
+                document.getElementById('annualResult').innerText = "0.00";
+            }
+        }
+        // 初始化計算
+        calculateOption();
+    </script>
+</body>
+</html>
